@@ -1,0 +1,8 @@
+{
+  "credit": "激活（powered=true）底座：侧面贴纸切换为 Create 官方提取的 sticker_side_powered.png（本地命名空间）。",
+  "parent": "create_cargo_dispatch:block/cargo_sticky_base",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "4": "create_cargo_dispatch:block/sticker_side_powered"
+  }
+}

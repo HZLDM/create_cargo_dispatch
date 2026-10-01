@@ -1,0 +1,8 @@
+{
+  "credit": "激活版静态合并（手持物品变体预留）：侧面贴纸切换为 Create 官方提取的 sticker_side_powered.png。",
+  "parent": "create_cargo_dispatch:block/cargo_sticky_block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "4": "create_cargo_dispatch:block/sticker_side_powered"
+  }
+}

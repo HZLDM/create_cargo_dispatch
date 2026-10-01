@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "create_cargo_dispatch:lumber",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 48,
+    "separation": 16,
+    "salt": 1928374650,
+    "frequency": 1.0
+  }
+}

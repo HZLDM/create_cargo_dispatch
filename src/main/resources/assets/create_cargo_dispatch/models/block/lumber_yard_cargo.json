@@ -1,0 +1,7 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "all": "create_cargo_dispatch:block/cargo_box",
+    "particle": "create_cargo_dispatch:block/cargo_box"
+  }
+}

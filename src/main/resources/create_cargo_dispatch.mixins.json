@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.hzldm.createcargodispatch.mixin",
+  "plugin": "com.hzldm.createcargodispatch.mixin.CreateCargoDispatchMixinPlugin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "JigsawStructureMixin",
+    "SubLevelRemovalMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

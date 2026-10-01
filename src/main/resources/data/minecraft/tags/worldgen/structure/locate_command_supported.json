@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "create_cargo_dispatch:farm",
+    "create_cargo_dispatch:livestock_farm",
+    "create_cargo_dispatch:lumber",
+    "create_cargo_dispatch:metallurgy",
+    "create_cargo_dispatch:mine"
+  ]
+}

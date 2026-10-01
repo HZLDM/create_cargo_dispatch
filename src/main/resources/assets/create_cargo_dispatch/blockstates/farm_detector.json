@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,lit=false": { "model": "create_cargo_dispatch:block/farm_detector", "y":   0 },
+    "facing=east,lit=false":  { "model": "create_cargo_dispatch:block/farm_detector", "y":  90 },
+    "facing=south,lit=false": { "model": "create_cargo_dispatch:block/farm_detector", "y": 180 },
+    "facing=west,lit=false":  { "model": "create_cargo_dispatch:block/farm_detector", "y": 270 },
+    "facing=north,lit=true":  { "model": "create_cargo_dispatch:block/farm_detector", "y":   0 },
+    "facing=east,lit=true":   { "model": "create_cargo_dispatch:block/farm_detector", "y":  90 },
+    "facing=south,lit=true":  { "model": "create_cargo_dispatch:block/farm_detector", "y": 180 },
+    "facing=west,lit=true":   { "model": "create_cargo_dispatch:block/farm_detector", "y": 270 }
+  }
+}

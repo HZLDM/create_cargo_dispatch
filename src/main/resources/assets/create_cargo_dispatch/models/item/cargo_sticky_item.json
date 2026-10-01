@@ -1,0 +1,4 @@
+{
+  "credit": "手持物品模型：与静态合并 8 元素 cargo_sticky_block 完全一致（手持不做 TESR 动画），不跨命名空间引用",
+  "parent": "create_cargo_dispatch:block/cargo_sticky_block"
+}

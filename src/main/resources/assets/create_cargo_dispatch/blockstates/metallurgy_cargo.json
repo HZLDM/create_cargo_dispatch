@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "axis=x,large=false": { "model": "create_cargo_dispatch:block/metallurgy_cargo", "y": 90 },
+    "axis=x,large=true":  { "model": "create_cargo_dispatch:block/metallurgy_cargo", "y": 90 },
+    "axis=z,large=false": { "model": "create_cargo_dispatch:block/metallurgy_cargo" },
+    "axis=z,large=true":  { "model": "create_cargo_dispatch:block/metallurgy_cargo" }
+  }
+}

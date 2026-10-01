@@ -1,0 +1,91 @@
+{
+  "credit": "静态合并版（给 item 手持用，不做 TESR 动画）：base + head 8 元素一次性画；sticker/sticker_side 为 Create 官方提取的原始 bytes（本地命名空间）。",
+  "parent": "block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "0": "block/piston_bottom",
+    "1": "block/piston_inner",
+    "2": "block/piston_side",
+    "3": "create_cargo_dispatch:block/sticker",
+    "4": "create_cargo_dispatch:block/sticker_side",
+    "particle": "block/piston_bottom"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 8, 16],
+      "faces": {
+        "north": {"uv": [0, 8, 16, 16], "texture": "#4"},
+        "east":  {"uv": [0, 8, 16, 16], "texture": "#4"},
+        "south": {"uv": [0, 8, 16, 16], "texture": "#4"},
+        "west":  {"uv": [0, 8, 16, 16], "texture": "#4"},
+        "up":    {"uv": [0, 0, 16, 16], "texture": "#1"},
+        "down":  {"uv": [0, 0, 16, 16], "texture": "#0"}
+      }
+    },
+    {
+      "from": [0, 8, 0],
+      "to": [16, 16, 16],
+      "rotation": {"angle": 0, "axis": "y", "origin": [8, 16, 8]},
+      "faces": {
+        "north": {"uv": [0, 0, 16, 8], "texture": "#4"},
+        "east":  {"uv": [0, 0, 16, 8], "texture": "#4"},
+        "south": {"uv": [0, 0, 16, 8], "texture": "#4"},
+        "west":  {"uv": [0, 0, 16, 8], "texture": "#4"},
+        "up":    {"uv": [0, 0, 8, 8],  "texture": "#3"}
+      }
+    },
+    {
+      "from": [0, 8, -0.95],
+      "to": [16, 16, 0.05],
+      "faces": {
+        "south": {"uv": [0, 0, 16, 8], "texture": "#4"}
+      }
+    },
+    {
+      "from": [0, 8, 15.95],
+      "to": [16, 16, 16.95],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 8], "texture": "#4"}
+      }
+    },
+    {
+      "from": [15.95, 8, 0],
+      "to": [16.95, 16, 16],
+      "faces": {
+        "west": {"uv": [0, 0, 16, 8], "texture": "#4"}
+      }
+    },
+    {
+      "from": [-0.95, 8, 0],
+      "to": [0.05, 16, 16],
+      "faces": {
+        "east": {"uv": [16, 0, 0, 8], "texture": "#4"}
+      }
+    },
+    {
+      "from": [1, 8, 1],
+      "to": [15, 13, 15],
+      "rotation": {"angle": 0, "axis": "y", "origin": [9, 16, 9]},
+      "faces": {
+        "north": {"uv": [8.5, 0, 15.5, 2.5],  "texture": "#3"},
+        "east":  {"uv": [8.5, 0, 15.5, 2.5],  "texture": "#3"},
+        "south": {"uv": [8.5, 0, 15.5, 2.5],  "texture": "#3"},
+        "west":  {"uv": [8.5, 0, 15.5, 2.5],  "texture": "#3"},
+        "up":    {"uv": [8.5, 8.5, 15.5, 15.5],"texture": "#3"},
+        "down":  {"uv": [0.5, 8.5, 7.5, 15.5], "texture": "#3"}
+      }
+    },
+    {
+      "from": [6, 3, 6],
+      "to": [10, 8, 10],
+      "rotation": {"angle": 0, "axis": "y", "origin": [14, 11, 14]},
+      "faces": {
+        "north": {"uv": [0, 0, 5, 4], "rotation": 90, "texture": "#2"},
+        "east":  {"uv": [0, 0, 5, 4], "rotation": 90, "texture": "#2"},
+        "south": {"uv": [0, 0, 5, 4], "rotation": 90, "texture": "#2"},
+        "west":  {"uv": [0, 0, 5, 4], "rotation": 90, "texture": "#2"}
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "create_cargo_dispatch:livestock_farm",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "salt": 1684512369,
+    "spacing": 64,
+    "separation": 24,
+    "type": "minecraft:random_spread"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "new_order": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "create_cargo_dispatch:new_order",
+        "stream": false
+      }
+    ]
+  },
+  "order_accept": {
+    "category": "player",
+    "subtitle": "create_cargo_dispatch.subtitle.order_accept",
+    "sounds": [
+      {
+        "name": "create_cargo_dispatch:order_accept",
+        "stream": false
+      }
+    ]
+  },
+  "order_notify": {
+    "category": "player",
+    "subtitle": "create_cargo_dispatch.subtitle.order_notify",
+    "sounds": [
+      {
+        "name": "create_cargo_dispatch:order_notify",
+        "stream": false
+      }
+    ]
+  }
+}
