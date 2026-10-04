@@ -1,6 +1,5 @@
 package com.hzldm.createcargodispatch.menu;
 
-import com.hzldm.createcargodispatch.client.ClientCargoCache;
 import com.hzldm.createcargodispatch.network.SyncLinkagesPayload;
 import com.hzldm.createcargodispatch.registry.ModMenuTypes;
 import net.minecraft.server.level.ServerPlayer;
@@ -8,6 +7,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
@@ -38,8 +39,9 @@ public class ConnectedStationsMenu extends AbstractContainerMenu {
     }
 
     /** 获取已连接站点列表（客户端从缓存读取） */
+    @OnlyIn(Dist.CLIENT)
     public List<SyncLinkagesPayload.LinkageEntry> getLinkages() {
-        return ClientCargoCache.getLinkages();
+        return com.hzldm.createcargodispatch.client.ClientCargoCache.getLinkages();
     }
 
     /** 客户端点击断开连接：发送断开请求 */

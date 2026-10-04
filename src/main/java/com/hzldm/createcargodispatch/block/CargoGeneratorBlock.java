@@ -22,6 +22,8 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -107,11 +109,20 @@ public class CargoGeneratorBlock extends Block implements EntityBlock {
                             : "create_cargo_dispatch.generator.range_hidden"), true);
                 }
             } else if (level.isClientSide()) {
-                net.minecraft.client.Minecraft.getInstance()
-                        .setScreen(new com.hzldm.createcargodispatch.client.GeneratorSettingsScreen(pos));
+                openGeneratorSettingsScreen(pos);
             }
         }
         return InteractionResult.CONSUME;
+    }
+
+    /**
+     * 客户端：打开发货设置界面。
+     * 标记 @OnlyIn(Dist.CLIENT)：服务端剥离后，Minecraft/GeneratorSettingsScreen 引用不会残留在字节码中。
+     */
+    @OnlyIn(Dist.CLIENT)
+    private static void openGeneratorSettingsScreen(BlockPos pos) {
+        net.minecraft.client.Minecraft.getInstance()
+                .setScreen(new com.hzldm.createcargodispatch.client.GeneratorSettingsScreen(pos));
     }
 
     @Nullable

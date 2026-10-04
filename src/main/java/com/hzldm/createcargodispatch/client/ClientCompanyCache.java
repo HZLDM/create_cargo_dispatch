@@ -3,6 +3,8 @@ package com.hzldm.createcargodispatch.client;
 import com.hzldm.createcargodispatch.network.SyncCompanyPayload;
 import com.hzldm.createcargodispatch.network.SyncCompanyPayload.JoinableEntry;
 import com.hzldm.createcargodispatch.network.SyncCompanyPayload.MemberEntry;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.List;
 import java.util.UUID;
@@ -68,6 +70,7 @@ public final class ClientCompanyCache {
     }
 
     /** 当前客户端玩家是否为创建者（决定踢人/解散/邀请控件是否显示） */
+    @OnlyIn(Dist.CLIENT)
     public static boolean isCreator() {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         return inCompany && mc.player != null && mc.player.getUUID().equals(creatorId);

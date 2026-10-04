@@ -1,7 +1,6 @@
 package com.hzldm.createcargodispatch.network;
 
 import com.hzldm.createcargodispatch.CreateCargoDispatch;
-import com.hzldm.createcargodispatch.client.ClientCompanyCache;
 import com.hzldm.createcargodispatch.company.CompanyService;
 import com.hzldm.createcargodispatch.menu.CompanyMenu;
 import net.minecraft.network.chat.Component;
@@ -9,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
  *
  * 原理：
  *  - 6 个 C2S 操作包全部 enqueueWork 切到服务端主线程后委托 {@link CompanyService}
- *  - 1 个 S2C 同步包在客户端主线程整表写入 ClientCompanyCache
+ *  - 1 个 S2C 同步包在客户端主线程整表写入 ClientCompanyCache（见 ClientPayloadHandlers）
  *  - 所有异常 exceptionally 兜底，单个坏包不影响连接
  */
 public final class CompanyPayloadHandlers {
@@ -29,7 +29,8 @@ public final class CompanyPayloadHandlers {
 
     /** 注册入口：由主类构造时挂到 modEventBus */
     public static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar(CreateCargoDispatch.MODID)
+        PayloadRegistrar registrar = event.registrar(CreateCargoDispatch.MODID);
+        registrar
                 .playToServer(OpenCompanyMenuPayload.TYPE, OpenCompanyMenuPayload.STREAM_CODEC,
                         CompanyPayloadHandlers::handleOpenMenu)
                 .playToServer(CreateCompanyPayload.TYPE, CreateCompanyPayload.STREAM_CODEC,
@@ -43,9 +44,11 @@ public final class CompanyPayloadHandlers {
                 .playToServer(InviteCompanyMemberPayload.TYPE, InviteCompanyMemberPayload.STREAM_CODEC,
                         CompanyPayloadHandlers::handleInvite)
                 .playToServer(UpgradeCompanyLevelPayload.TYPE, UpgradeCompanyLevelPayload.STREAM_CODEC,
-                        CompanyPayloadHandlers::handleUpgradeLevel)
-                .playToClient(SyncCompanyPayload.TYPE, SyncCompanyPayload.STREAM_CODEC,
-                        CompanyPayloadHandlers::handleSync);
+                        CompanyPayloadHandlers::handleUpgradeLevel);
+        // S2C 处理器引用 ClientCompanyCache，移到 @OnlyIn(Dist.CLIENT) 的 ClientPayloadHandlers
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
+            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.registerCompanyClient(registrar);
+        }
     }
 
     /** 打开联合运输页：先推最新状态再开菜单（与订单页同一套 0 RTT 模式） */
@@ -126,14 +129,5 @@ public final class CompanyPayloadHandlers {
             LOGGER.error("提升公司等级失败", ex);
             return null;
         });
-    }
-
-    /** 客户端：整表替换联合运输状态 */
-    private static void handleSync(SyncCompanyPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> ClientCompanyCache.update(payload))
-                .exceptionally(ex -> {
-                    LOGGER.error("同步联合运输状态失败", ex);
-                    return null;
-                });
     }
 }

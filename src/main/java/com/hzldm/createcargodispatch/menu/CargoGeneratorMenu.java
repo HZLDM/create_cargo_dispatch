@@ -1,7 +1,6 @@
 package com.hzldm.createcargodispatch.menu;
 
 import com.hzldm.createcargodispatch.blockentity.CargoStationBlockEntity;
-import com.hzldm.createcargodispatch.client.ClientCargoCache;
 import com.hzldm.createcargodispatch.cargo.StationType;
 import com.hzldm.createcargodispatch.network.AcceptOrderPayload;
 import com.hzldm.createcargodispatch.network.RequestSubmitListPayload;
@@ -17,6 +16,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
@@ -146,7 +147,13 @@ public class CargoGeneratorMenu extends AbstractContainerMenu {
         }
         // 客户端：按站坐标+类型实时从全局缓存过滤（带类型参数，避免 viewerStationType 是空导致类型判断跳过）
         String typeId = (t != null) ? t.getId() : "";
-        return ClientCargoCache.getOrdersForStation(p, typeId);
+        return getClientOrdersForStation(p, typeId);
+    }
+
+    /** 客户端：从 ClientCargoCache 按站过滤订单。@OnlyIn 确保服务端不加载 ClientCargoCache。 */
+    @OnlyIn(Dist.CLIENT)
+    private static List<SyncOrdersPayload.OrderEntry> getClientOrdersForStation(BlockPos p, String typeId) {
+        return com.hzldm.createcargodispatch.client.ClientCargoCache.getOrdersForStation(p, typeId);
     }
 
     public CargoStationBlockEntity getStation() { return station; }

@@ -1,6 +1,5 @@
 package com.hzldm.createcargodispatch.menu;
 
-import com.hzldm.createcargodispatch.client.ClientCargoCache;
 import com.hzldm.createcargodispatch.network.AbandonOrderPayload;
 import com.hzldm.createcargodispatch.network.SyncActiveOrdersPayload;
 import com.hzldm.createcargodispatch.registry.ModMenuTypes;
@@ -9,6 +8,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
@@ -40,8 +41,9 @@ public class PlayerOrdersMenu extends AbstractContainerMenu {
     }
 
     /** 获取当前活跃订单（客户端从缓存读取） */
+    @OnlyIn(Dist.CLIENT)
     public List<SyncActiveOrdersPayload.ActiveOrderEntry> getActiveOrders() {
-        return ClientCargoCache.getActiveOrders();
+        return com.hzldm.createcargodispatch.client.ClientCargoCache.getActiveOrders();
     }
 
     /** 客户端点击放弃订单：发送放弃请求 */

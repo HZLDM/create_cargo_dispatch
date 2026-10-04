@@ -138,6 +138,10 @@ public final class CargoAttacher {
                 cbe.setCargoData(cargoData);
                 cbe.setMainBlock(p.equals(base));
                 cbe.setChanged();
+                // 关键修复：setChanged() 只标记脏数据用于保存，不会同步到客户端。
+                // 必须主动 sendBlockUpdated 触发 getUpdatePacket，否则客户端 CargoBlockEntity
+                // 保持默认 CargoData（3×3×9），渲染器 fallback 到 DEFAULT 尺寸。
+                inner.sendBlockUpdated(p, state, state, Block.UPDATE_CLIENTS);
             }
         }
 

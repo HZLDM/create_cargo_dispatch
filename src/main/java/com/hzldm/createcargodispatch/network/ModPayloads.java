@@ -65,7 +65,8 @@ public final class ModPayloads {
 
     /** 注册入口：由主类调用 */
     public static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar(CreateCargoDispatch.MODID)
+        var registrar = event.registrar(CreateCargoDispatch.MODID);
+        registrar
                 .playToServer(AcceptOrderPayload.TYPE, AcceptOrderPayload.STREAM_CODEC, ModPayloads::handleAcceptOrder)
                 .playToServer(AbandonOrderPayload.TYPE, AbandonOrderPayload.STREAM_CODEC, ModPayloads::handleAbandonOrder)
                 .playToServer(OpenOrdersMenuPayload.TYPE, OpenOrdersMenuPayload.STREAM_CODEC, ModPayloads::handleOpenOrdersMenu)
@@ -81,19 +82,15 @@ public final class ModPayloads {
                 .playToServer(ConvertStationItemPayload.TYPE, ConvertStationItemPayload.STREAM_CODEC, ModPayloads::handleConvertStationItem)
                 .playToServer(SetGeneratorModePayload.TYPE, SetGeneratorModePayload.STREAM_CODEC, ModPayloads::handleSetGeneratorMode)
                 .playToServer(SetCargoDimensionsPayload.TYPE, SetCargoDimensionsPayload.STREAM_CODEC, ModPayloads::handleSetCargoDimensions)
-                .playToClient(SyncOrdersPayload.TYPE, SyncOrdersPayload.STREAM_CODEC, ModPayloads::handleSyncOrders)
-                .playToClient(SyncActiveOrdersPayload.TYPE, SyncActiveOrdersPayload.STREAM_CODEC, ModPayloads::handleSyncActiveOrders)
-                .playToClient(SyncLinkagesPayload.TYPE, SyncLinkagesPayload.STREAM_CODEC, ModPayloads::handleSyncLinkages)
-                .playToClient(AddWaypointPayload.TYPE, AddWaypointPayload.STREAM_CODEC, ModPayloads::handleAddWaypoint)
-                .playToClient(RemoveWaypointPayload.TYPE, RemoveWaypointPayload.STREAM_CODEC, ModPayloads::handleRemoveWaypoint)
-                .playToClient(SyncSubmitListPayload.TYPE, SyncSubmitListPayload.STREAM_CODEC, ModPayloads::handleSyncSubmitList)
-                .playToClient(SyncStationOrdersViewerPayload.TYPE, SyncStationOrdersViewerPayload.STREAM_CODEC, ModPayloads::handleSyncStationOrdersViewer)
-                // 调试货箱编辑页
-                .playToClient(SyncDebugCargoPayload.TYPE, SyncDebugCargoPayload.STREAM_CODEC, ModPayloads::handleSyncDebugCargo)
                 .playToServer(UpdateDebugCargoTargetPayload.TYPE, UpdateDebugCargoTargetPayload.STREAM_CODEC, ModPayloads::handleUpdateDebugCargoTarget)
                 .playToServer(UpdateDebugCargoFieldsPayload.TYPE, UpdateDebugCargoFieldsPayload.STREAM_CODEC, ModPayloads::handleUpdateDebugCargoFields)
                 .playToServer(UpdateDebugCargoDimsPayload.TYPE, UpdateDebugCargoDimsPayload.STREAM_CODEC, ModPayloads::handleUpdateDebugCargoDims)
                 .playToServer(ApplyDebugCargoPayload.TYPE, ApplyDebugCargoPayload.STREAM_CODEC, ModPayloads::handleApplyDebugCargo);
+        // S2C 处理器引用客户端类，必须放在 @OnlyIn(Dist.CLIENT) 的 ClientPayloadHandlers 中，
+        // 否则服务端加载 ModPayloads 时 RuntimeDistCleaner 会因常量池含 Screen/Minecraft 引用而崩溃。
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
+            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.registerClient(registrar);
+        }
     }
 
     // =========================================================================
@@ -367,53 +364,6 @@ public final class ModPayloads {
             }
         }).exceptionally(ex -> {
             LOGGER.error("处理接单请求失败", ex);
-            return null;
-        });
-    }
-
-    /** 处理订单列表同步（客户端） */
-    private static void handleSyncOrders(SyncOrdersPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> {
-            // 写入全局 PENDING 订单缓存 + 下次刷新绝对 gameTime。
-            // - CargoGeneratorScreen 订单 Tab：CargoGeneratorMenu.getOrders() 客户端侧直接返回 ClientCargoCache.getOrders()
-            //   → 货运站现场 UI 共享这份缓存。
-            // - StationOrdersViewerScreen：每次渲染时从 ClientCargoCache.getOrdersForStation(站坐标) 实时按坐标过滤
-            //   → 不再有"viewer 专属缓存"、没有缓存同步/刷新步骤；订单集合、行内剩余时间计算与现场 UI 100% 同数据源。
-            com.hzldm.createcargodispatch.client.ClientCargoCache.updateOrders(payload.orders(), payload.nextRefreshGameTime());
-        }).exceptionally(ex -> {
-            LOGGER.error("处理订单同步失败", ex);
-            return null;
-        });
-    }
-
-    /** 处理添加路径点通知（客户端） */
-    private static void handleAddWaypoint(AddWaypointPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> {
-            com.hzldm.createcargodispatch.client.ClientCargoCache.addWaypoint(
-                    payload.targetX(), payload.targetY(), payload.targetZ(),
-                    payload.dimension(), payload.name(), payload.initials());
-        }).exceptionally(ex -> {
-            LOGGER.error("处理路径点添加失败", ex);
-            return null;
-        });
-    }
-
-    /** 处理删除路径点通知（客户端） */
-    private static void handleRemoveWaypoint(RemoveWaypointPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> {
-            com.hzldm.createcargodispatch.client.ClientCargoCache.removeWaypoint(payload.name());
-        }).exceptionally(ex -> {
-            LOGGER.error("处理路径点删除失败", ex);
-            return null;
-        });
-    }
-
-    /** 处理活跃订单同步（客户端） */
-    private static void handleSyncActiveOrders(SyncActiveOrdersPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> {
-            com.hzldm.createcargodispatch.client.ClientCargoCache.updateActiveOrders(payload.orders());
-        }).exceptionally(ex -> {
-            LOGGER.error("处理活跃订单同步失败", ex);
             return null;
         });
     }
@@ -873,16 +823,6 @@ public final class ModPayloads {
         });
     }
 
-    /** 处理联络线列表同步（客户端） */
-    private static void handleSyncLinkages(SyncLinkagesPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> {
-            com.hzldm.createcargodispatch.client.ClientCargoCache.updateLinkages(payload.linkages());
-        }).exceptionally(ex -> {
-            LOGGER.error("处理联络线同步失败", ex);
-            return null;
-        });
-    }
-
     /**
      * 搜索附近的同类型检测器方块
      * 原理：
@@ -958,22 +898,6 @@ public final class ModPayloads {
             }
         }).exceptionally(ex -> {
             LOGGER.error("处理请求提交列表失败", ex);
-            return null;
-        });
-    }
-
-    /**
-     * 处理提交页面同步（客户端）
-     * 原理：存到 ClientCargoCache，Screen 每 tick 读取渲染
-     */
-    private static void handleSyncSubmitList(SyncSubmitListPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> {
-            com.hzldm.createcargodispatch.client.ClientCargoCache.updateSubmitList(
-                    payload.stationX(), payload.stationY(), payload.stationZ(),
-                    payload.entries(), payload.autoSubmit(),
-                    payload.hasGenerator(), payload.hasDetector());
-        }).exceptionally(ex -> {
-            LOGGER.error("处理提交列表同步失败", ex);
             return null;
         });
     }
@@ -1323,53 +1247,6 @@ public final class ModPayloads {
         });
     }
 
-    /**
-     * 处理服务端返回的远程查看站订单数据（客户端）
-     *
-     * 原理：
-     *  - 先把数据写入 ClientCargoCache.stationViewerOrders（包括站坐标、类型、订单快照、下次刷新时间）
-     *  - 然后切客户端主线程打开 StationOrdersViewerScreen（Screen 必须在主线程创建/显示，避免 Minecraft 渲染线程断言）
-     *  - 只读保证由 StationOrdersViewerScreen 本身负责：无接单按钮、不响应提交操作
-     */
-    private static void handleSyncStationOrdersViewer(SyncStationOrdersViewerPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> {
-            // 先写缓存（不管当前是否已有 Screen 打开，都必须写）：
-            //   - 首次打开：写入后 init() 能读到站坐标、订单快照、下次刷新时间
-            //   - 已打开状态下的周期性重请求/到点重请求：缓存更新后，StationOrdersViewerScreen.render()
-            //     每帧直接从 ClientCargoCache 读，下一帧自动显示最新数据（完全不需要重建 Screen）
-            com.hzldm.createcargodispatch.client.ClientCargoCache.updateStationViewerOrders(
-                    payload.stationX(), payload.stationY(), payload.stationZ(),
-                    payload.stationType(), payload.orders(), payload.nextRefreshGameTime());
-
-            // 切 Minecraft 主线程决定是否需要 setScreen
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-            mc.execute(() -> {
-                try {
-                    // ★ 关键判断：当前已经显示 StationOrdersViewerScreen 时，绝对不能再 setScreen(new)
-                    //   否则 setScreen 内部先调用 oldScreen.onClose() → clearStationViewerOrders()
-                    //   会把刚写好的缓存瞬间清空 → 新 Screen init() 读到空数据 → tick 立即重发请求
-                    //   → 下一次回包又 setScreen(new) → 无限循环 → "倒计时/同步中"疯狂跳闪
-                    //   注意：用全限定名判断 instanceof，不 import Screen 类避免服务端 ClassLoader 报错
-                    if (mc.screen instanceof com.hzldm.createcargodispatch.client.StationOrdersViewerScreen) {
-                        return; // 仅更新缓存即可，下一帧 render 自然反映最新数据
-                    }
-                    // 只有"从背包/其他页点击📋按钮触发的首次回包"才 setScreen
-                    mc.setScreen(new com.hzldm.createcargodispatch.client.StationOrdersViewerScreen());
-                } catch (Throwable t) {
-                    LOGGER.error("打开 StationOrdersViewerScreen 失败", t);
-                    if (mc.player != null) {
-                        mc.player.displayClientMessage(
-                                Component.translatable("create_cargo_dispatch.station_viewer.open_failed"),
-                                false);
-                    }
-                }
-            });
-        }).exceptionally(ex -> {
-            LOGGER.error("处理同步站订单查看数据失败", ex);
-            return null;
-        });
-    }
-
     // =========================================================================
     // 调试货箱编辑页（不可放置的调试物品右键打开，编辑主手物品组件）
     // =========================================================================
@@ -1585,12 +1462,6 @@ public final class ModPayloads {
             LOGGER.error("生成调试货箱失败", ex);
             return null;
         });
-    }
-
-    /** 调试页初始/刷新数据（客户端） */
-    private static void handleSyncDebugCargo(SyncDebugCargoPayload payload, IPayloadContext context) {
-        context.enqueueWork(() ->
-                com.hzldm.createcargodispatch.client.ClientDebugCargoCache.update(payload));
     }
 
     // =========================================================================

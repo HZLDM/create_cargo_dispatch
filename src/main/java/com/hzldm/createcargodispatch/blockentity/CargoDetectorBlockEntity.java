@@ -547,6 +547,26 @@ public class CargoDetectorBlockEntity extends BlockEntity {
             settleRewardIntoCompany(level, order, rewardMoney);
         }
 
+        // 1.5 解析订单所属公司（与 settleRewardIntoCompany 同一套兜底逻辑），
+        //     用于后续向「全体在线公司成员」广播完成通知（不再只通知接单玩家）。
+        // 根因：奖励入公司账户，公司所有成员共享收益，完成提示理应全员可见；
+        //       旧实现只给接单玩家发，导致「A 接单、B 送货」时 B 看不到任何完成反馈。
+        UUID notifyCompanyId = order.getOwnerCompany();
+        if (notifyCompanyId == null) {
+            UUID pid = boundPlayerId;
+            if (pid == null) pid = com.hzldm.createcargodispatch.cargo.OrderPlayerBinding
+                    .getPlayer(completedOrderId);
+            if (pid == null) pid = order.getAcceptedPlayer();
+            if (pid != null) {
+                notifyCompanyId = com.hzldm.createcargodispatch.company.CompanyStore.get(level)
+                        .getCompanyIdOfPlayer(pid);
+            }
+        }
+        java.util.List<UUID> notifyMemberIds = (notifyCompanyId != null)
+                ? com.hzldm.createcargodispatch.company.CompanyStore.get(level)
+                        .getCompany(notifyCompanyId).members()
+                : java.util.List.of();
+
         // 2. 已认领订单标记完成并落盘（订单已从 ACCEPTED 摘除，无需也不能再调 completeOrder 重复摘除）
         OrderManager.finishClaimedOrder(order, level);
 
@@ -558,29 +578,26 @@ public class CargoDetectorBlockEntity extends BlockEntity {
         notifyRemoveWaypoint(level, completedOrderId);
 
         // 4. 播放完成音效：统一使用用户提供的「提示.ogg」（ORDER_NOTIFY）
-        //    推送方式：直接给「接单玩家」调 ServerPlayer.playNotifySound(PLAYERS 声道)
+        //    推送方式：给「全体在线公司成员」调 ServerPlayer.playNotifySound(PLAYERS 声道)
         //      - 忽略距离 / 位置直接推送，挂机在起点也能听到
         //      - PLAYERS 声道受 "玩家音量" 控制，一般都开着；BLOCKS 声道可能被关了
         //    同时保留给检测器附近所有人也放一次（氛围）
         if (completedOrderId != null && level.getServer() != null) {
-            UUID playerId = com.hzldm.createcargodispatch.cargo.OrderPlayerBinding.getPlayer(completedOrderId);
-            if (playerId == null && order != null) playerId = order.getAcceptedPlayer();
-            if (playerId != null) {
-                net.minecraft.server.level.ServerPlayer orderPlayer = level.getServer().getPlayerList().getPlayer(playerId);
-                if (orderPlayer != null) {
-                    try {
-                        orderPlayer.playNotifySound(
-                                ModSounds.ORDER_NOTIFY.value(),
-                                net.minecraft.sounds.SoundSource.PLAYERS,
-                                0.85F, 1.0F);
-                        LOGGER.debug("[CargoDispatch] completeOrder→玩家 {} 订单 {} 已播放 ORDER_NOTIFY 完成提示音",
-                                orderPlayer.getName().getString(), completedOrderId);
-                    } catch (Throwable t) {
-                        LOGGER.error("[CargoDispatch] completeOrder 播放 ORDER_NOTIFY 失败 玩家={},订单={}",
-                                playerId, completedOrderId, t);
-                    }
+            for (UUID mid : notifyMemberIds) {
+                net.minecraft.server.level.ServerPlayer member = level.getServer().getPlayerList().getPlayer(mid);
+                if (member == null) continue;
+                try {
+                    member.playNotifySound(
+                            ModSounds.ORDER_NOTIFY.value(),
+                            net.minecraft.sounds.SoundSource.PLAYERS,
+                            0.85F, 1.0F);
+                } catch (Throwable t) {
+                    LOGGER.error("[CargoDispatch] completeOrder 播放 ORDER_NOTIFY 失败 玩家={},订单={}",
+                            member.getName().getString(), completedOrderId, t);
                 }
             }
+            LOGGER.debug("[CargoDispatch] completeOrder→订单 {} 已向公司 {} 的 {} 名在线成员播放完成提示音",
+                    completedOrderId, notifyCompanyId, notifyMemberIds.size());
         }
         // 附近玩家提示：近距离也能听到 ORDER_NOTIFY（保证不是接单玩家也能听到"这家伙完成订单了"）
         try {
@@ -592,22 +609,20 @@ public class CargoDetectorBlockEntity extends BlockEntity {
                     getBlockPos(), completedOrderId, t);
         }
 
-        // 5. 给接单玩家发送订单完成系统消息（合并了"奖励获得/提交成功/订单完成"，避免三层重复消息）
-        if (completedOrderId != null) {
-            UUID playerId = com.hzldm.createcargodispatch.cargo.OrderPlayerBinding.getPlayer(completedOrderId);
-            if (playerId == null && order != null) playerId = order.getAcceptedPlayer();
-            if (playerId != null && level.getServer() != null) {
-                net.minecraft.server.level.ServerPlayer orderPlayer = level.getServer().getPlayerList().getPlayer(playerId);
-                if (orderPlayer != null) {
-                    String shortOrderId = completedOrderId.length() > 8
-                            ? completedOrderId.substring(0, 8)
-                            : completedOrderId;
-                    // 奖励统一为货运币（已入公司账户，见 settleRewardIntoCompany）
-                    orderPlayer.sendSystemMessage(
-                            net.minecraft.network.chat.Component.translatable(
-                                    "create_cargo_dispatch.order.completed",
-                                    shortOrderId, cargoItemCount, rewardMoney,
-                                    Component.translatable("create_cargo_dispatch.currency.coin")));
+        // 5. 给「全体在线公司成员」发送订单完成系统消息
+        //    （合并了"奖励获得/提交成功/订单完成"，避免三层重复消息）
+        if (completedOrderId != null && level.getServer() != null) {
+            String shortOrderId = completedOrderId.length() > 8
+                    ? completedOrderId.substring(0, 8)
+                    : completedOrderId;
+            Component completionMsg = Component.translatable(
+                    "create_cargo_dispatch.order.completed",
+                    shortOrderId, cargoItemCount, rewardMoney,
+                    Component.translatable("create_cargo_dispatch.currency.coin"));
+            for (UUID mid : notifyMemberIds) {
+                net.minecraft.server.level.ServerPlayer member = level.getServer().getPlayerList().getPlayer(mid);
+                if (member != null) {
+                    member.sendSystemMessage(completionMsg);
                 }
             }
             // 清理 OrderPlayerBinding 绑定

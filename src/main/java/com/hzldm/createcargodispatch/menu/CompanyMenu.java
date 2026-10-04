@@ -1,6 +1,5 @@
 package com.hzldm.createcargodispatch.menu;
 
-import com.hzldm.createcargodispatch.client.ClientCompanyCache;
 import com.hzldm.createcargodispatch.company.CompanyService;
 import com.hzldm.createcargodispatch.network.CreateCompanyPayload;
 import com.hzldm.createcargodispatch.network.InviteCompanyMemberPayload;
@@ -14,6 +13,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
@@ -37,45 +38,56 @@ public class CompanyMenu extends AbstractContainerMenu {
     }
 
     // ============== 客户端数据读取（供 Screen 渲染） ==============
+    // 所有方法均 @OnlyIn(Dist.CLIENT)：服务端不调用，且避免 ClientCompanyCache 引用残留在服务端字节码
 
+    @OnlyIn(Dist.CLIENT)
     public boolean isInCompany() {
-        return ClientCompanyCache.isInCompany();
+        return com.hzldm.createcargodispatch.client.ClientCompanyCache.isInCompany();
     }
 
+    @OnlyIn(Dist.CLIENT)
     public String getCompanyName() {
-        return ClientCompanyCache.getCompanyName();
+        return com.hzldm.createcargodispatch.client.ClientCompanyCache.getCompanyName();
     }
 
+    @OnlyIn(Dist.CLIENT)
     public boolean isCreator() {
-        return ClientCompanyCache.isCreator();
+        return com.hzldm.createcargodispatch.client.ClientCompanyCache.isCreator();
     }
 
+    @OnlyIn(Dist.CLIENT)
     public List<SyncCompanyPayload.MemberEntry> getMembers() {
-        return ClientCompanyCache.getMembers();
+        return com.hzldm.createcargodispatch.client.ClientCompanyCache.getMembers();
     }
 
+    @OnlyIn(Dist.CLIENT)
     public List<SyncCompanyPayload.JoinableEntry> getJoinables() {
-        return ClientCompanyCache.getJoinables();
+        return com.hzldm.createcargodispatch.client.ClientCompanyCache.getJoinables();
     }
 
+    @OnlyIn(Dist.CLIENT)
     public long getBalance() {
-        return ClientCompanyCache.getBalance();
+        return com.hzldm.createcargodispatch.client.ClientCompanyCache.getBalance();
     }
 
+    @OnlyIn(Dist.CLIENT)
     public int getReputation() {
-        return ClientCompanyCache.getReputation();
+        return com.hzldm.createcargodispatch.client.ClientCompanyCache.getReputation();
     }
 
+    @OnlyIn(Dist.CLIENT)
     public int getCompanyLevel() {
-        return ClientCompanyCache.getCompanyLevel();
+        return com.hzldm.createcargodispatch.client.ClientCompanyCache.getCompanyLevel();
     }
 
+    @OnlyIn(Dist.CLIENT)
     public int getLinkSlots() {
-        return ClientCompanyCache.getLinkSlots();
+        return com.hzldm.createcargodispatch.client.ClientCompanyCache.getLinkSlots();
     }
 
+    @OnlyIn(Dist.CLIENT)
     public long getNextUpgradeCost() {
-        return ClientCompanyCache.getNextUpgradeCost();
+        return com.hzldm.createcargodispatch.client.ClientCompanyCache.getNextUpgradeCost();
     }
 
     // ============== 客户端动作 ==============

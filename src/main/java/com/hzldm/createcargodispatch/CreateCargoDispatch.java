@@ -10,6 +10,7 @@ import com.hzldm.createcargodispatch.registry.ModItems;
 import com.hzldm.createcargodispatch.registry.ModMenuTypes;
 import com.hzldm.createcargodispatch.registry.ModSounds;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -50,14 +51,10 @@ public class CreateCargoDispatch {
         // 原理：
         //  - IConfigScreenFactory 是客户端类，必须用 FMLEnvironment.dist == Dist.CLIENT 检查
         //    否则服务端加载主类时会触发 ClassNotFoundException
-        //  - IConfigScreenFactory 是函数接口，与 Supplier 重载冲突，必须显式 cast 消除歧义
-        //  - ConfigurationScreen 会自动根据已注册的 ModConfigSpec 生成配置界面
+        //  - 实际屏幕创建逻辑抽到 @OnlyIn(Dist.CLIENT) 方法，避免 Screen 类引用残留在服务端字节码中
+        //    （RuntimeDistCleaner 会扫描常量池，lambda 体内的 Screen 引用同样会被检测到）
         if (FMLEnvironment.dist == Dist.CLIENT) {
-            modContainer.registerExtensionPoint(
-                    net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
-                    (java.util.function.Supplier<net.neoforged.neoforge.client.gui.IConfigScreenFactory>)
-                            () -> (minecraft, parent) ->
-                                    new net.neoforged.neoforge.client.gui.ConfigurationScreen(modContainer, parent));
+            registerConfigScreenFactory(modContainer);
         }
 
         // 注册 capability
@@ -82,5 +79,19 @@ public class CreateCargoDispatch {
      */
     private static void onRegisterCapabilities(RegisterCapabilitiesEvent event) {
         CargoBlockEntity.registerCapabilities(event);
+    }
+
+    /**
+     * 客户端配置屏工厂注册。
+     * 标记 @OnlyIn(Dist.CLIENT)：服务端加载时 RuntimeDistCleaner 会剥离此方法，
+     * 使 ConfigurationScreen / Screen 等客户端类引用不出现在服务端字节码中。
+     */
+    @OnlyIn(Dist.CLIENT)
+    private static void registerConfigScreenFactory(ModContainer modContainer) {
+        modContainer.registerExtensionPoint(
+                net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
+                (java.util.function.Supplier<net.neoforged.neoforge.client.gui.IConfigScreenFactory>)
+                        () -> (minecraft, parent) ->
+                                new net.neoforged.neoforge.client.gui.ConfigurationScreen(modContainer, parent));
     }
 }

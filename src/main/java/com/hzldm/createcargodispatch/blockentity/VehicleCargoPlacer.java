@@ -82,6 +82,10 @@ public final class VehicleCargoPlacer {
                 cbe.setCargoData(cargoData);
                 cbe.setMainBlock(p.equals(base));
                 cbe.setChanged();
+                // 关键修复：setChanged() 只标记脏数据用于保存，不会同步到客户端。
+                // 必须主动 sendBlockUpdated 触发 getUpdatePacket，否则客户端 CargoBlockEntity
+                // 保持默认 CargoData（3×3×9），渲染器 fallback 到 DEFAULT 尺寸。
+                inner.sendBlockUpdated(p, state, state, Block.UPDATE_CLIENTS);
             }
         }
 
@@ -162,6 +166,7 @@ public final class VehicleCargoPlacer {
             remaining -= (n - left.getCount());
         }
         mainBE.setChanged();
+        inner.sendBlockUpdated(base, inner.getBlockState(base), inner.getBlockState(base), Block.UPDATE_CLIENTS);
 
         // 复制主 inventory 到其余方块（护目镜在任意方块上显示一致）
         SimpleContainer src = mainBE.getInventory();
@@ -170,6 +175,7 @@ public final class VehicleCargoPlacer {
             if (inner.getBlockEntity(p) instanceof CargoBlockEntity cbe) {
                 copyInventory(src, cbe.getInventory());
                 cbe.setChanged();
+                inner.sendBlockUpdated(p, inner.getBlockState(p), inner.getBlockState(p), Block.UPDATE_CLIENTS);
             }
         }
     }
@@ -187,6 +193,7 @@ public final class VehicleCargoPlacer {
             ItemHandlerHelper.insertItemStacked(handler, s.copy(), false);
         }
         mainBE.setChanged();
+        inner.sendBlockUpdated(base, inner.getBlockState(base), inner.getBlockState(base), Block.UPDATE_CLIENTS);
 
         // 复制主 inventory 到其余方块（护目镜在任意方块上显示一致）
         SimpleContainer src = mainBE.getInventory();
@@ -195,6 +202,7 @@ public final class VehicleCargoPlacer {
             if (inner.getBlockEntity(p) instanceof CargoBlockEntity cbe) {
                 copyInventory(src, cbe.getInventory());
                 cbe.setChanged();
+                inner.sendBlockUpdated(p, inner.getBlockState(p), inner.getBlockState(p), Block.UPDATE_CLIENTS);
             }
         }
     }
