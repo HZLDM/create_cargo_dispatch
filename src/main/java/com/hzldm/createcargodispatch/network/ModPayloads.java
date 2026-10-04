@@ -86,10 +86,69 @@ public final class ModPayloads {
                 .playToServer(UpdateDebugCargoFieldsPayload.TYPE, UpdateDebugCargoFieldsPayload.STREAM_CODEC, ModPayloads::handleUpdateDebugCargoFields)
                 .playToServer(UpdateDebugCargoDimsPayload.TYPE, UpdateDebugCargoDimsPayload.STREAM_CODEC, ModPayloads::handleUpdateDebugCargoDims)
                 .playToServer(ApplyDebugCargoPayload.TYPE, ApplyDebugCargoPayload.STREAM_CODEC, ModPayloads::handleApplyDebugCargo);
-        // S2C 处理器引用客户端类，必须放在 @OnlyIn(Dist.CLIENT) 的 ClientPayloadHandlers 中，
-        // 否则服务端加载 ModPayloads 时 RuntimeDistCleaner 会因常量池含 Screen/Minecraft 引用而崩溃。
+        // S2C 通道必须在服务端也注册，否则握手时服务端不声明这些通道，客户端连接会报
+        // "服务端缺少此客户端需要的网络通道"。handler 内部用 dist 守卫转发到 @OnlyIn 的客户端实现。
+        registrar
+                .playToClient(SyncOrdersPayload.TYPE, SyncOrdersPayload.STREAM_CODEC, ModPayloads::handleSyncOrders)
+                .playToClient(SyncActiveOrdersPayload.TYPE, SyncActiveOrdersPayload.STREAM_CODEC, ModPayloads::handleSyncActiveOrders)
+                .playToClient(SyncLinkagesPayload.TYPE, SyncLinkagesPayload.STREAM_CODEC, ModPayloads::handleSyncLinkages)
+                .playToClient(AddWaypointPayload.TYPE, AddWaypointPayload.STREAM_CODEC, ModPayloads::handleAddWaypoint)
+                .playToClient(RemoveWaypointPayload.TYPE, RemoveWaypointPayload.STREAM_CODEC, ModPayloads::handleRemoveWaypoint)
+                .playToClient(SyncSubmitListPayload.TYPE, SyncSubmitListPayload.STREAM_CODEC, ModPayloads::handleSyncSubmitList)
+                .playToClient(SyncStationOrdersViewerPayload.TYPE, SyncStationOrdersViewerPayload.STREAM_CODEC, ModPayloads::handleSyncStationOrdersViewer)
+                .playToClient(SyncDebugCargoPayload.TYPE, SyncDebugCargoPayload.STREAM_CODEC, ModPayloads::handleSyncDebugCargo);
+    }
+
+    // ===================== S2C 公共 handler（dist 守卫转发到客户端实现） =====================
+    // 原理：playToClient 通道需在服务端注册以便握手声明，但 handler 只在客户端执行。
+    // 这里用 dist 判断守卫，服务端不会进入 ClientPayloadHandlers 分支，
+    // RuntimeDistCleaner 会剥离服务端字节码中对 ClientPayloadHandlers 的引用。
+
+    private static void handleSyncOrders(SyncOrdersPayload payload, IPayloadContext context) {
         if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
-            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.registerClient(registrar);
+            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.handleSyncOrders(payload, context);
+        }
+    }
+
+    private static void handleSyncActiveOrders(SyncActiveOrdersPayload payload, IPayloadContext context) {
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
+            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.handleSyncActiveOrders(payload, context);
+        }
+    }
+
+    private static void handleSyncLinkages(SyncLinkagesPayload payload, IPayloadContext context) {
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
+            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.handleSyncLinkages(payload, context);
+        }
+    }
+
+    private static void handleAddWaypoint(AddWaypointPayload payload, IPayloadContext context) {
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
+            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.handleAddWaypoint(payload, context);
+        }
+    }
+
+    private static void handleRemoveWaypoint(RemoveWaypointPayload payload, IPayloadContext context) {
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
+            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.handleRemoveWaypoint(payload, context);
+        }
+    }
+
+    private static void handleSyncSubmitList(SyncSubmitListPayload payload, IPayloadContext context) {
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
+            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.handleSyncSubmitList(payload, context);
+        }
+    }
+
+    private static void handleSyncStationOrdersViewer(SyncStationOrdersViewerPayload payload, IPayloadContext context) {
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
+            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.handleSyncStationOrdersViewer(payload, context);
+        }
+    }
+
+    private static void handleSyncDebugCargo(SyncDebugCargoPayload payload, IPayloadContext context) {
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
+            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.handleSyncDebugCargo(payload, context);
         }
     }
 

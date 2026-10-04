@@ -13,7 +13,6 @@ import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,27 +35,7 @@ public final class ClientPayloadHandlers {
 
     private ClientPayloadHandlers() {}
 
-    /** 注册所有 S2C 处理器（仅客户端调用） */
-    public static void registerClient(PayloadRegistrar registrar) {
-        registrar.playToClient(SyncOrdersPayload.TYPE, SyncOrdersPayload.STREAM_CODEC,
-                        ClientPayloadHandlers::handleSyncOrders)
-                .playToClient(SyncActiveOrdersPayload.TYPE, SyncActiveOrdersPayload.STREAM_CODEC,
-                        ClientPayloadHandlers::handleSyncActiveOrders)
-                .playToClient(SyncLinkagesPayload.TYPE, SyncLinkagesPayload.STREAM_CODEC,
-                        ClientPayloadHandlers::handleSyncLinkages)
-                .playToClient(AddWaypointPayload.TYPE, AddWaypointPayload.STREAM_CODEC,
-                        ClientPayloadHandlers::handleAddWaypoint)
-                .playToClient(RemoveWaypointPayload.TYPE, RemoveWaypointPayload.STREAM_CODEC,
-                        ClientPayloadHandlers::handleRemoveWaypoint)
-                .playToClient(SyncSubmitListPayload.TYPE, SyncSubmitListPayload.STREAM_CODEC,
-                        ClientPayloadHandlers::handleSyncSubmitList)
-                .playToClient(SyncStationOrdersViewerPayload.TYPE, SyncStationOrdersViewerPayload.STREAM_CODEC,
-                        ClientPayloadHandlers::handleSyncStationOrdersViewer)
-                .playToClient(SyncDebugCargoPayload.TYPE, SyncDebugCargoPayload.STREAM_CODEC,
-                        ClientPayloadHandlers::handleSyncDebugCargo);
-    }
-
-    private static void handleSyncOrders(SyncOrdersPayload payload, IPayloadContext context) {
+    public static void handleSyncOrders(SyncOrdersPayload payload, IPayloadContext context) {
         context.enqueueWork(() ->
                 ClientCargoCache.updateOrders(payload.orders(), payload.nextRefreshGameTime())
         ).exceptionally(ex -> {
@@ -65,7 +44,7 @@ public final class ClientPayloadHandlers {
         });
     }
 
-    private static void handleAddWaypoint(AddWaypointPayload payload, IPayloadContext context) {
+    public static void handleAddWaypoint(AddWaypointPayload payload, IPayloadContext context) {
         context.enqueueWork(() ->
                 ClientCargoCache.addWaypoint(
                         payload.targetX(), payload.targetY(), payload.targetZ(),
@@ -76,7 +55,7 @@ public final class ClientPayloadHandlers {
         });
     }
 
-    private static void handleRemoveWaypoint(RemoveWaypointPayload payload, IPayloadContext context) {
+    public static void handleRemoveWaypoint(RemoveWaypointPayload payload, IPayloadContext context) {
         context.enqueueWork(() ->
                 ClientCargoCache.removeWaypoint(payload.name())
         ).exceptionally(ex -> {
@@ -85,7 +64,7 @@ public final class ClientPayloadHandlers {
         });
     }
 
-    private static void handleSyncActiveOrders(SyncActiveOrdersPayload payload, IPayloadContext context) {
+    public static void handleSyncActiveOrders(SyncActiveOrdersPayload payload, IPayloadContext context) {
         context.enqueueWork(() ->
                 ClientCargoCache.updateActiveOrders(payload.orders())
         ).exceptionally(ex -> {
@@ -94,7 +73,7 @@ public final class ClientPayloadHandlers {
         });
     }
 
-    private static void handleSyncLinkages(SyncLinkagesPayload payload, IPayloadContext context) {
+    public static void handleSyncLinkages(SyncLinkagesPayload payload, IPayloadContext context) {
         context.enqueueWork(() ->
                 ClientCargoCache.updateLinkages(payload.linkages())
         ).exceptionally(ex -> {
@@ -103,7 +82,7 @@ public final class ClientPayloadHandlers {
         });
     }
 
-    private static void handleSyncSubmitList(SyncSubmitListPayload payload, IPayloadContext context) {
+    public static void handleSyncSubmitList(SyncSubmitListPayload payload, IPayloadContext context) {
         context.enqueueWork(() ->
                 ClientCargoCache.updateSubmitList(
                         payload.stationX(), payload.stationY(), payload.stationZ(),
@@ -119,7 +98,7 @@ public final class ClientPayloadHandlers {
      * 处理远程查看站订单回包：写缓存 + 主线程打开 StationOrdersViewerScreen。
      * 已打开时不重建 Screen（避免 onClose 清缓存导致无限重发包）。
      */
-    private static void handleSyncStationOrdersViewer(SyncStationOrdersViewerPayload payload, IPayloadContext context) {
+    public static void handleSyncStationOrdersViewer(SyncStationOrdersViewerPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
             ClientCargoCache.updateStationViewerOrders(
                     payload.stationX(), payload.stationY(), payload.stationZ(),
@@ -147,21 +126,15 @@ public final class ClientPayloadHandlers {
         });
     }
 
-    private static void handleSyncDebugCargo(SyncDebugCargoPayload payload, IPayloadContext context) {
+    public static void handleSyncDebugCargo(SyncDebugCargoPayload payload, IPayloadContext context) {
         context.enqueueWork(() ->
                 ClientDebugCargoCache.update(payload));
     }
 
     // ===================== 联合运输公司 S2C =====================
 
-    /** 注册联合运输公司的 S2C 处理器（由 CompanyPayloadHandlers 在客户端分支调用） */
-    public static void registerCompanyClient(PayloadRegistrar registrar) {
-        registrar.playToClient(SyncCompanyPayload.TYPE, SyncCompanyPayload.STREAM_CODEC,
-                ClientPayloadHandlers::handleSyncCompany);
-    }
-
     /** 客户端：整表替换联合运输状态 */
-    private static void handleSyncCompany(SyncCompanyPayload payload, IPayloadContext context) {
+    public static void handleSyncCompany(SyncCompanyPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> ClientCompanyCache.update(payload))
                 .exceptionally(ex -> {
                     LOGGER.error("同步联合运输状态失败", ex);

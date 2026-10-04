@@ -45,9 +45,15 @@ public final class CompanyPayloadHandlers {
                         CompanyPayloadHandlers::handleInvite)
                 .playToServer(UpgradeCompanyLevelPayload.TYPE, UpgradeCompanyLevelPayload.STREAM_CODEC,
                         CompanyPayloadHandlers::handleUpgradeLevel);
-        // S2C 处理器引用 ClientCompanyCache，移到 @OnlyIn(Dist.CLIENT) 的 ClientPayloadHandlers
+        // S2C 通道需在服务端注册以便握手声明，handler 内部 dist 守卫转发到客户端实现
+        registrar.playToClient(SyncCompanyPayload.TYPE, SyncCompanyPayload.STREAM_CODEC,
+                CompanyPayloadHandlers::handleSyncCompany);
+    }
+
+    /** S2C：同步公司状态到客户端（dist 守卫转发到 @OnlyIn 实现） */
+    private static void handleSyncCompany(SyncCompanyPayload payload, IPayloadContext context) {
         if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
-            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.registerCompanyClient(registrar);
+            com.hzldm.createcargodispatch.client.ClientPayloadHandlers.handleSyncCompany(payload, context);
         }
     }
 
